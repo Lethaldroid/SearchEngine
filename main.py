@@ -4,18 +4,19 @@ import string
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
-
-filtered_sentence = []
-dictionary = {}
-
+from collections import defaultdict
 stop_words = set(stopwords.words("english"))
 snow_stemmer = SnowballStemmer(language='english')
+
+filenames = []
+lex_dictionary = {}
+fi_dictionary = defaultdict(list)
 fp_lex = open("lexicon.txt", "w")
+fp_fi = open("forwardindex.txt", "w")
+
 docid = -1
 key = 0
-
-# t0 = time.time()
-
+# making of lexicon
 for fname in glob.glob("newsdata/*.json"):
     fp = open(fname, "r")
     y = json.load(fp)
@@ -31,14 +32,14 @@ for fname in glob.glob("newsdata/*.json"):
             if w.isalpha():
                 if w not in stop_words:
                     x = snow_stemmer.stem(w)
-                    filtered_sentence.append(x)
-                    if x not in dictionary:
-                        dictionary[x] = key
+                    if x not in lex_dictionary:
+                        lex_dictionary[x] = key
                         key += 1
+                    if x in lex_dictionary:     #making of forward index
+                        fi_dictionary[docid].append(lex_dictionary[x])
     print(fp.name)
     print(docid)
-json.dump(dictionary, fp_lex)
+json.dump(lex_dictionary, fp_lex)
+json.dump(fi_dictionary, fp_fi)
 fp_lex.close()
-# t1 = time.time()
-# total = t1-t0
-# print(total)
+fp_fi.close()
