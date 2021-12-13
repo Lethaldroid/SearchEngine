@@ -65,6 +65,7 @@ for fname in glob.glob("newsdata/*.json"):
                                 key += 1
                             if x in lex_dictionary:  # making of forward index
                                 fi_dictionary[docid].append(lex_dictionary[x])
+                                ii_dictionary[lex_dictionary[x]].append(docid)
             print(fp.name)
             print(docid)
         else:
