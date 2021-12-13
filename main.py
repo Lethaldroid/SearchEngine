@@ -13,7 +13,9 @@ snow_stemmer = SnowballStemmer(language='english')
 filename = {}
 lex_dictionary = {}
 fi_dictionary = defaultdict(list)
+ii_dictionary = defaultdict(list)
 fp_fi = open("forwardindex.txt", "w")
+fp_ii = open("invertedindex.txt", "w")
 docid = -1
 key = 0
 file_exists = os.path.exists('filecount.txt')
@@ -89,10 +91,13 @@ for fname in glob.glob("newsdata/*.json"):
                             key += 1
                         if x in lex_dictionary:  # making of forward index
                             fi_dictionary[docid].append(lex_dictionary[x])
+                            ii_dictionary[lex_dictionary[x]].append(docid)
         print(fp.name)
         print(docid)
 json.dump(lex_dictionary, fp_lex)
 json.dump(fi_dictionary, fp_fi)
+json.dump(ii_dictionary,fp_ii)
+fp_ii.close()
 fp_lex.close()
 fp_fi.close()
 fp_filenames.close()
