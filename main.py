@@ -95,7 +95,7 @@ for fname in glob.glob("newsdata/*.json"):
                             if str(lex_dictionary[x]) in ii_dictionary:
                                 if str(docid) not in ii_dictionary[f"{lex_dictionary[x]}"]:
                                     #wordid exists but doc id doesnt
-                                    ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"] = position
+                                    ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"] = [position]
                                 elif str(docid) in ii_dictionary[f"{lex_dictionary[x]}"]:
                                     #wordid and docid exists
                                     temp_list = [ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"]]
