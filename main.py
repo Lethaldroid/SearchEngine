@@ -52,9 +52,9 @@ if os.path.isfile("lexicon.json"):
     ii_dictionary = json.load(fp_ii)
     fp_ii.close()
 
-    fp_fi = open("forwardindex.json", "r")
-    fi_dictionary = json.load(fp_fi)
-    fp_fi.close()
+    # fp_fi = open("forwardindex.json", "r")
+    # fi_dictionary = json.load(fp_fi)
+    # fp_fi.close()
 else:
     lex_dictionary = {}
     fi_dictionary = defaultdict(list)
@@ -102,10 +102,10 @@ for fname in glob.glob("newsdata/*.json"):
                                     temp_list = list(flatten(temp_list))
                                     temp_list.append(position)
                                     ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"] = temp_list
-                            if str(docid) not in fi_dictionary:# making of forward index
-                                fi_dictionary[f"{docid}"] = [lex_dictionary[x]]
-                            if str(docid) in fi_dictionary:
-                                if lex_dictionary[x] not in fi_dictionary[f"{docid}"]:
+                            # if str(docid) not in fi_dictionary:# making of forward index
+                            #     fi_dictionary[f"{docid}"] = [lex_dictionary[x]]
+                            # if str(docid) in fi_dictionary:
+                            #     if lex_dictionary[x] not in fi_dictionary[f"{docid}"]:
                                     fi_dictionary[f"{docid}"].append(lex_dictionary[x])
                         position += 1
                 docid = docid + 1
@@ -122,15 +122,15 @@ fp_temp.write("\n")
 fp_temp.write(str(docid))
 fp_temp.close()
 if write == 1:
-    fp_fi = open("forwardindex.json", "w")
+    # fp_fi = open("forwardindex.json", "w")
     fp_ii = open("invertedindex.json", "w")
     fp_lex = open("lexicon.json", "w")
     json.dump(lex_dictionary, fp_lex)
-    json.dump(fi_dictionary, fp_fi)
+    # json.dump(fi_dictionary, fp_fi)
     json.dump(ii_dictionary, fp_ii)
     fp_ii.close()
     fp_lex.close()
 
-fp_fi.close()
+# fp_fi.close()
 fp_filenames.close()
 print(time.time() - start_time)
