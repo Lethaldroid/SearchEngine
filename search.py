@@ -34,6 +34,14 @@ def intersection(lst1, lst2):
     lst3 = [value for value in lst1 if value in temp]
     return lst3
 
+def singleword(word):
+    stemmedWord = snow_stemmer.stem(word)
+    if stemmedWord in lexicon:
+        wordId = lexicon[stemmedWord]
+        elem = invertedIndex[str(wordId)]
+        sth = OrderedDict(sorted(elem.items(), key=lambda item: len(item[1]), reverse=True))
+        return sth
+
 
 def multi_dict(k, type):
     if k == 1:
@@ -56,45 +64,49 @@ def check_if_string_in_file(file_name, string_to_search):
 
 write = 0
 start_time = time.time()
+search = ""
+while search != "-1":
+    search = input("Enter your search : ")
+    start = time.time()
+    wordsInSearch = search.split()
+    if len(wordsInSearch) > 1:
+        # multiWord(wordsInSearch)
+        wordslist = []
+        docslist = {}
+        res = {}
+        commonset = {}
+        i=0
+        search_tokens = word_tokenize(search)
+        search_tokens = [w.lower() for w in search_tokens]
+        table = str.maketrans('', '', string.punctuation)
+        search_strip = [w.translate(table) for w in search_tokens]
+        for w in search_strip:
+            if w.isalpha() and w not in stop_words:
 
-search = input("Enter your search : ")
-start = time.time()
-wordsInSearch = search.split()
-if len(wordsInSearch) > 1:
-    # multiWord(wordsInSearch)
-    wordslist = []
-    docslist = {}
-    sth = {}
-    i=0
-    search_tokens = word_tokenize(search)
-    search_tokens = [w.lower() for w in search_tokens]
-    table = str.maketrans('', '', string.punctuation)
-    search_strip = [w.translate(table) for w in search_tokens]
-    for w in search_strip:
-        if w.isalpha() and w not in stop_words:
-            x = snow_stemmer.stem(w)
-            if x in lexicon:
-                wordslist.append(lexicon[x])
-                docslist[wordslist[i]] = invertedIndex[f"{wordslist[i]}"]
-                sth = functools.reduce(set.intersection, (set(val) for val in docslist.values()))
-            i = i+1
+                x = snow_stemmer.stem(w)
+                if x in lexicon:
+                    res[lexicon[x]] = singleword(x)
+                    # print(set)
+                #     wordslist.append(lexicon[x])
+                #     docslist[wordslist[i]] = invertedIndex[f"{wordslist[i]}"]
+                #     # print(docslist)
+                #     print(common_set)
+                i = i+1
 
-    if len(sth) == 0:
-        print("No such combination of words exist in the database")
+        common_set = functools.reduce(set.intersection, (set(val) for val in res.values()))
+        print(common_set)
+        print("The length: ", len(common_set))
+        if len(common_set) == 0:
+            print("No such combination of words exist in the database")
+        else:
+            for val in common_set:
+                print(url_dic[f"{val}"])
+
     else:
-        for val in sth:
-            print(url_dic[f"{val}"])
-
-else:
-    stemmedWord = snow_stemmer.stem(search)
-    if stemmedWord in lexicon:
-        wordId = lexicon[stemmedWord]
-        elem = invertedIndex[str(wordId)]
-        sth = OrderedDict(sorted(elem.items(), key=lambda item: len(item[1]), reverse=True))
-        print(sth)
-        for key in sth.keys():
-            print(url_dic[f"{key}"])
-        #print(listoflist)
-    else:
-        print("No such word exists in the database")
-print(time.time()-start)
+        sth = singleword(search)
+        if len(sth) > 0:
+            for key in sth.keys():
+                print(url_dic[f"{key}"])
+        else:
+            print("No such word exists in the database")
+    print(time.time()-start)
