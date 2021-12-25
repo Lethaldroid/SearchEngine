@@ -48,14 +48,19 @@ if os.path.isfile("lexicon.json"):
     lex_dictionary = json.load(fp_lex)
     fp_lex.close()
 
+    fp_url = open("urls.json", "r")
+    url_dictionary = json.load(fp_url)
+    fp_url.close()
+
     fp_ii = open("invertedindex.json", "r")
     ii_dictionary = json.load(fp_ii)
     fp_ii.close()
 
-    # fp_fi = open("forwardindex.json", "r")
-    # fi_dictionary = json.load(fp_fi)
-    # fp_fi.close()
+    fp_fi = open("forwardindex.json", "r")
+    fi_dictionary = json.load(fp_fi)
+    fp_fi.close()
 else:
+    url_dictionary = {}
     lex_dictionary = {}
     fi_dictionary = defaultdict(list)
     ii_dictionary = multi_dict(2, list)
@@ -78,6 +83,7 @@ for fname in glob.glob("newsdata/*.json"):
             for i in range(len(y)):
                 position = 0
                 word_tokens = word_tokenize(y[i]["content"])
+                url_dictionary[f"{docid}"] = y[i]["url"]
                 word_tokens = [w.lower() for w in word_tokens]
                 table = str.maketrans('', '', string.punctuation)
                 strip = [w.translate(table) for w in word_tokens]
@@ -102,10 +108,10 @@ for fname in glob.glob("newsdata/*.json"):
                                     temp_list = list(flatten(temp_list))
                                     temp_list.append(position)
                                     ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"] = temp_list
-                            # if str(docid) not in fi_dictionary:# making of forward index
-                            #     fi_dictionary[f"{docid}"] = [lex_dictionary[x]]
-                            # if str(docid) in fi_dictionary:
-                            #     if lex_dictionary[x] not in fi_dictionary[f"{docid}"]:
+                            if str(docid) not in fi_dictionary:# making of forward index
+                                fi_dictionary[f"{docid}"] = [lex_dictionary[x]]
+                            if str(docid) in fi_dictionary:
+                                if lex_dictionary[x] not in fi_dictionary[f"{docid}"]:
                                     fi_dictionary[f"{docid}"].append(lex_dictionary[x])
                         position += 1
                 docid = docid + 1
@@ -122,15 +128,18 @@ fp_temp.write("\n")
 fp_temp.write(str(docid))
 fp_temp.close()
 if write == 1:
-    # fp_fi = open("forwardindex.json", "w")
+    fp_fi = open("forwardindex.json", "w")
     fp_ii = open("invertedindex.json", "w")
     fp_lex = open("lexicon.json", "w")
+    fp_url = open("urls.json","w")
     json.dump(lex_dictionary, fp_lex)
-    # json.dump(fi_dictionary, fp_fi)
+    json.dump(fi_dictionary, fp_fi)
     json.dump(ii_dictionary, fp_ii)
+    json.dump(url_dictionary, fp_url)
+    fp_url.close()
     fp_ii.close()
     fp_lex.close()
 
-# fp_fi.close()
+fp_fi.close()
 fp_filenames.close()
 print(time.time() - start_time)
