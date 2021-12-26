@@ -56,8 +56,11 @@ def titleCheck(word):
     stemmedWord = snow_stemmer.stem(word)
     if stemmedWord in lexicon:
         wordid = lexicon[stemmedWord]
-        title = titleIndex[f"{wordid}"]
-        return title
+        if wordid in titleIndex.keys():
+            title = titleIndex[f"{wordid}"]
+            return title
+        else:
+            return []
 
 
 def check_if_string_in_file(file_name, string_to_search):
@@ -124,6 +127,9 @@ while search != "-1":
         if len(tt) > 0 and len(sth) > 0:
             for t in tt:
                 print(url_dic[f"{t}"])
+            for key in sth.keys():
+                print(url_dic[f"{key}"])
+        if len(tt) == 0 and len(sth) > 0:
             for key in sth.keys():
                 print(url_dic[f"{key}"])
         else:
