@@ -87,14 +87,18 @@ for fname in glob.glob("newsdata/*.json"):
             y = json.load(fp)
             for i in range(len(y)):
                 position = 0
+
                 word_tokens = word_tokenize(y[i]["content"])
                 url_dictionary[f"{docid}"] = y[i]["url"]
                 title_tokens = word_tokenize(y[i]["title"])
+
                 word_tokens = [w.lower() for w in word_tokens]
-                title_tokens = [t.lower() for t in title_tokens]
                 table = str.maketrans('', '', string.punctuation)
                 strip = [w.translate(table) for w in word_tokens]
-                title_strip = [t.translate(table) for t in title_tokens]
+
+                title_tokens = [t.lower() for t in title_tokens]
+                title_table = str.maketrans('', '', string.punctuation)
+                title_strip = [t.translate(title_table) for t in title_tokens]
                 for w in strip:
                     if w.isalpha() and w not in stop_words:
                         x = snow_stemmer.stem(w)
@@ -102,21 +106,22 @@ for fname in glob.glob("newsdata/*.json"):
                             # making of lexicon
                             lex_dictionary[x] = key
                             key += 1
-                        if x in lex_dictionary:#making of inverted index
+                        if x in lex_dictionary:  # making of inverted index
                             if str(lex_dictionary[x]) not in ii_dictionary:
-                                #wordid does not exist
-                                ii_dictionary.update({f"{lex_dictionary[x]}": {} })
+                                # wordid does not exist
+                                ii_dictionary.update({f"{lex_dictionary[x]}": {}})
                             if str(lex_dictionary[x]) in ii_dictionary:
                                 if str(docid) not in ii_dictionary[f"{lex_dictionary[x]}"]:
-                                    #wordid exists but doc id doesnt
+                                    # wordid exists but doc id doesnt
                                     ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"] = [position]
                                 elif str(docid) in ii_dictionary[f"{lex_dictionary[x]}"]:
-                                    #wordid and docid exists
+                                    # wordid and docid exists
                                     temp_list = [ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"]]
                                     temp_list = list(flatten(temp_list))
                                     temp_list.append(position)
                                     ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"] = temp_list
-                            if str(docid) not in fi_dictionary:# making of forward index
+                            if str(docid) not in fi_dictionary:
+                                # making of forward index
                                 fi_dictionary[f"{docid}"] = [lex_dictionary[x]]
                             if str(docid) in fi_dictionary:
                                 if lex_dictionary[x] not in fi_dictionary[f"{docid}"]:
@@ -125,21 +130,21 @@ for fname in glob.glob("newsdata/*.json"):
                 for t in title_strip:
                     if t.isalpha() and t not in stop_words:
                         t = snow_stemmer.stem(t)
-                    if t not in lex_dictionary:
-                        lex_dictionary[t]=key
-                        key+=1
-                    if t in lex_dictionary:
-                        if str(lex_dictionary[t]) not in title_dictionary:
-                            title_dictionary[f"{lex_dictionary[t]}"] = [docid]
-                        if str(lex_dictionary[t]) in title_dictionary:
-                            if docid not in title_dictionary[f"{lex_dictionary[t]}"]:
-                                title_dictionary[f"{lex_dictionary[t]}"].append(docid)
+                        if t not in lex_dictionary:
+                            print(t)
+                            lex_dictionary[t] = key
+                            key += 1
+                        if t in lex_dictionary:
+                            if str(lex_dictionary[t]) not in title_dictionary:
+                                title_dictionary[f"{lex_dictionary[t]}"] = [docid]
+                            if str(lex_dictionary[t]) in title_dictionary:
+                                if docid not in title_dictionary[f"{lex_dictionary[t]}"]:
+                                    title_dictionary[f"{lex_dictionary[t]}"].append(docid)
                 docid = docid + 1
             print(fp.name)
             print(docid)
             write = 1
         else:
-            # print("went to next file")
             continue
 
 fp_temp = open("storage.txt", "w")
@@ -151,7 +156,7 @@ if write == 1:
     fp_fi = open("forwardindex.json", "w")
     fp_ii = open("invertedindex.json", "w")
     fp_lex = open("lexicon.json", "w")
-    fp_url = open("urls.json","w")
+    fp_url = open("urls.json", "w")
     fp_ti = open("titleinverted.json", "w")
     json.dump(lex_dictionary, fp_lex)
     json.dump(fi_dictionary, fp_fi)
