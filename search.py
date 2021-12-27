@@ -1,9 +1,8 @@
+import collections
 import functools
 import itertools
 import json
-import time
 import string
-# import numpy
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
@@ -40,9 +39,12 @@ def singleword(word):
     stemmedword = snow_stemmer.stem(word)
     if stemmedword in lexicon:
         wordid = lexicon[stemmedword]
-        elem = invertedIndex[str(wordid)]
-        sth = OrderedDict(sorted(elem.items(), key=lambda item: len(item[1]), reverse=True))
-        return sth
+        if str(wordid) in invertedIndex:
+            elem = invertedIndex[f"{wordid}"]
+            sth = OrderedDict(sorted(elem.items(), key=lambda item: len(item[1]), reverse=True))
+            return sth
+        else:
+            return []
     else:
         return []
 
@@ -55,28 +57,27 @@ def singlewordwithid(wordid):
     else:
         return []
 
+
 def titleCheck(word):
     stemmedWord = snow_stemmer.stem(word)
     if stemmedWord in lexicon:
         wordid = lexicon[stemmedWord]
-        if str(wordid) in titleIndex.keys():
-            title = titleIndex[f"{wordid}"]
-            return title
+        if str(wordid) in titleIndex:
+            titlesearch = titleIndex[f"{wordid}"]
+            return titlesearch
 
 
-start_time = time.time()
 search = ""
 while search != "-1":
     search = input("Enter your search : ")
-    start = time.time()
     wordsInSearch = search.split()
     if len(wordsInSearch) > 1:
         # multiWord(wordsInSearch)
         wordslist = []
-        res = {}
+        result = {}
         temp = defaultdict(list)
         mwq = {}
-        dic2 = {}
+        proximity = {}
         intitle = []
         rp = defaultdict(list)
         search_tokens = word_tokenize(search)
@@ -89,21 +90,21 @@ while search != "-1":
                 x = snow_stemmer.stem(w)
                 if x in lexicon:
                     wordslist.append(lexicon[x])
-                    res[lexicon[x]] = singleword(x)
+                    result[lexicon[x]] = singleword(x)
 
         for w in wordslist:
-            if str(w) in titleIndex.keys():
+            if str(w) in titleIndex:
                 title = titleIndex[str(w)]
                 intitle.extend(title)
 
         if len(wordslist) > 1:
-            common_set = functools.reduce(set.intersection, (set(val) for val in res.values()))
+            common_set = functools.reduce(set.intersection, (set(val) for val in result.values()))
+            common_title = [item for item, count in collections.Counter(intitle).items() if count > 1]
             i = 0
             for value in common_set:
                 for wid in wordslist:
                     rp[i].append(invertedIndex[f"{wid}"][f"{value}"])
                 i += 1
-            print(wordslist)
             i = 0
             for val, docid in itertools.zip_longest(range(len(rp)), common_set):
                 for value in rp[val]:
@@ -117,60 +118,60 @@ while search != "-1":
                 for i in range(len(mwq[docid]) - 1):
                     mwq[docid][0] = intersection(mwq[docid][0], mwq[docid][i + 1])
                     if len(mwq[docid][0]) != 0:
-                        dic2[docid] = mwq[docid][0]
+                        proximity[docid] = mwq[docid][0]
 
-            print("The intitle is: ", intitle)
+            print("The intitle is: ", common_title)
             if len(intitle) > 0:
-                print("------------TITILE OCCURRENCES-----------------\n\n")
-                for t in intitle:
+                print("\n------------TITLE OCCURRENCES-----------------\n")
+                for t in common_title:
                     if t is None:
                         continue
-                    else:
+                    else:#printing urls from docs where the words from query occur i.e common set
                         print(url_dic[f"{t}"])
 
-            print("\n\nThe other occurrences\n\n")
-
+            print("\n------------OTHER OCCURRENCES-----------------\n")
             if len(common_set) == 0:
                 print("No such combination of words exist in the database")
-                for wordids in wordslist:
+                for wordids in wordslist:# if there is no word from query in title or in close proximity or common in some document
                     sth = singlewordwithid(wordids)
                     if len(sth) > 0:
                         for key in sth.keys():
                             print(url_dic[f"{key}"])
                             break
                     else:
-                        print("No such word exists in the database")
-            else:
-                if len(dic2) != 0:
-                    for val in dic2.keys():
+                        continue
+            else:# printing words in close proximity first and the ones in common set later
+                if len(proximity) != 0:
+                    for val in proximity.keys():
                         print(url_dic[f"{val}"])
                     for value in common_set:
-                        if value not in dic2.keys():
+                        if value not in proximity.keys():
                             print(url_dic[f"{value}"])
 
-        elif len(wordslist) == 1:
+        elif len(wordslist) == 1: # if there is only 1 word from the multiword query that is in lexicon
             for wordids in wordslist:
                 sth = singlewordwithid(wordids)
                 if len(sth) > 0:
                     for key in sth.keys():
                         print(url_dic[f"{key}"])
 
-        else:
+        else: # if there is no word from the multiword query that is in lexicon
             print("No such combinations of words or individial words exist in the dataset")
 
     else:
-        tt = titleCheck(search)
-        if tt is None:
-            tt = []
-        sth = singleword(search)
-        if len(tt) > 0 and len(sth) > 0:
-            for t in tt:
-                print(url_dic[f"{t}"])
-            for key in sth.keys():
-                print(url_dic[f"{key}"])
-        if len(tt) == 0 and len(sth) > 0:
-            for key in sth.keys():
-                print(url_dic[f"{key}"])
+        ts = titleCheck(search)
+        if ts is None:
+            ts = []
+        sws = singleword(search)
+
+        if len(ts) > 0 or len(sws) > 0:
+            if len(ts) > 0:
+                print("\n------------TITLE OCCURRENCES-----------------\n")
+                for t in ts:
+                    print(url_dic[f"{t}"])
+            if len(sws) > 0:
+                print("\n------------OTHER OCCURRENCES-----------------\n")
+                for key in sws.keys():
+                    print(url_dic[f"{key}"])
         else:
             print("No such word exists in the database")
-    print(time.time() - start)
