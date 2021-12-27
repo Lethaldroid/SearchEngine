@@ -131,7 +131,6 @@ for fname in glob.glob("newsdata/*.json"):
                     if t.isalpha() and t not in stop_words:
                         t = snow_stemmer.stem(t)
                         if t not in lex_dictionary:
-                            print(t)
                             lex_dictionary[t] = key
                             key += 1
                         if t in lex_dictionary:
