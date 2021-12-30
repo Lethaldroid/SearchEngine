@@ -1,172 +1,112 @@
-import json
-import glob
-import time
-import string
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem.snowball import SnowballStemmer
-from collections import defaultdict
-import os.path
+import tkinter as tk
+import webbrowser
+from tkinter import font
+from PIL import ImageTk, Image
+from tkinter import *
+
+class VerticalScrolledFrame(tk.Frame):
+    """A pure Tkinter scrollable frame that actually works!
+
+    * Use the 'interior' attribute to place widgets inside the scrollable frame
+    * Construct and pack/place/grid normally
+    * This frame only allows vertical scrolling
+    """
+    def __init__(self, parent, *args, **kw):
+        tk.Frame.__init__(self, parent, *args, **kw)
+
+        # create a canvas object and a vertical scrollbar for scrolling it
+        vscrollbar = tk.Scrollbar(self, orient=tk.VERTICAL)
+        vscrollbar.pack(fill=tk.Y, side=tk.RIGHT, expand=tk.FALSE)
+        canvas = tk.Canvas(self, bd=0, highlightthickness=0,
+                        yscrollcommand=vscrollbar.set)
+        #canvas.place(x=2,y=200)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.TRUE)
+        vscrollbar.config(command=canvas.yview)
+
+        # reset the view
+        canvas.xview_moveto(0)
+        canvas.yview_moveto(0)
+
+        # create a frame inside the canvas which will be scrolled with it
+        self.interior = interior = tk.Frame(canvas)
+        interior_id = canvas.create_window(0, 0, window=interior,
+                                           anchor=tk.NW)
+
+        # track changes to the canvas and frame width and sync them,
+        # also updating the scrollbar
+        def _configure_interior(event):
+            # update the scrollbars to match the size of the inner frame
+            size = (interior.winfo_reqwidth(), interior.winfo_reqheight())
+            canvas.config(scrollregion="0 0 %s %s" % size)
+            if interior.winfo_reqwidth() != canvas.winfo_width():
+                # update the canvas's width to fit the inner frame
+                canvas.config(width=interior.winfo_reqwidth())
+
+        interior.bind('<Configure>', _configure_interior)
+
+        def _configure_canvas(event):
+            if interior.winfo_reqwidth() != canvas.winfo_width():
+                # update the inner frame's width to fill the canvas
+                canvas.itemconfigure(interior_id, width=canvas.winfo_width())
+        canvas.bind('<Configure>', _configure_canvas)
+
+def clear():
+    scframe.destroy()
+    create()
+    #global scframe=VerticalScrolledFrame(root)
+    #scframe.pack(side='bottom', pady=30)
+    #for widget in scframe.winfo_children():
+    #    widget.destroy()
+
+def getquery():
+    clear()
+    lis.clear()
+    e = user_query.get()
+    for k in range (1,10):
+        lis.append(str(e))
+    for i, x in enumerate(lis):
+        btn = tk.Button(scframe.interior, height=1, width=73, relief=tk.FLAT, bg="gray99", fg="blue", font="Dosis", text=f"{lis[i]}", command=lambda i=i, x=x: openlink(i))
+        btn.pack(padx=10, pady=5, side=tk.TOP)
+
+def create():
+    global scframe
+    scframe = VerticalScrolledFrame(root)
+    scframe.pack(side='bottom', pady=30)
 
 
-def flatten(lst):
-    for elem in lst:
-        if type(elem) in (tuple, list):
-            for i in flatten(elem):
-                yield i
-        else:
-            yield elem
+def openlink(i):
+    webbrowser.open_new(lis[i])
+
+root = tk.Tk()
+root.title("Search Engine")
+root.geometry('800x500')
+root['bg'] = '#FFFFFF'
+root.minsize(800, 500)
+root.maxsize(800, 500)
+lis = []
+user_query = tk.StringVar()
+#load = Image.open("C:\Users\dell\Pictures\BG.JPG")
+#logo_path = ImageTk.PhotoImage(load)
+
+#logo = Label(root, image=logo_path).place(x=175, y=10)
+button_font = font.Font(family='Arial', size=8)
+text_entry = tk.Entry(root, textvariable=user_query, width=55, bg='#C0C0C0').place(x=220, y=100)
+search_button = tk.Button(root, text="search", font=button_font, padx=1, pady=1, command=getquery).place(x=370, y=130)
+#clear_button = tk.Button(root, text="clear", font=button_font, padx=1, pady=1, command=clear).place(x=400, y=130)
+#box = tk.Text(root, bg="silver", width=90, height=17).place(x=39, y=200)
+
+scframe = VerticalScrolledFrame(root)
+scframe.pack(side='bottom', pady=30)
 
 
-def multi_dict(k, type):
-    if k == 1:
-        return defaultdict(type)
-    else:
-        return defaultdict(lambda: multi_dict(k - 1, type))
+# for k in range (1,10):
+#     lis=[]
+#
+# for i, x in enumerate(lis):
+#     btn = tk.Button(scframe.interior, height=1, width=73, relief=tk.FLAT,
+#         bg="gray99", fg="blue",
+#         font="Dosis", text=f"{lis[i]}",
+#         command=lambda i=i, x=x: openlink(i))
+#     btn.pack(padx=10, pady=5, side=tk.BOTTOM)
 
-
-def check_if_string_in_file(file_name, string_to_search):
-    """ Check if any line in the file contains given string """
-    # Open the file in read only mode
-    with open(file_name, 'r') as read_obj:
-        # Read all lines in the file one by one
-        for line in read_obj:
-            # For each line, check if line contains the string
-            if string_to_search in line:
-                return True
-    return False
-
-
-write = 0
-start_time = time.time()
-stop_words = set(stopwords.words("english"))
-snow_stemmer = SnowballStemmer(language='english')
-fp_filenames = open('filecount.txt', "a+")
-
-if os.path.isfile("lexicon.json"):
-    fp_lex = open("lexicon.json", "r")
-    lex_dictionary = json.load(fp_lex)
-    fp_lex.close()
-
-    fp_url = open("urls.json", "r")
-    url_dictionary = json.load(fp_url)
-    fp_url.close()
-
-    fp_ii = open("invertedindex.json", "r")
-    ii_dictionary = json.load(fp_ii)
-    fp_ii.close()
-
-    fp_fi = open("forwardindex.json", "r")
-    fi_dictionary = json.load(fp_fi)
-    fp_fi.close()
-
-    fp_ti = open("titleinverted.json", "r")
-    title_dictionary = json.load(fp_ti)
-    fp_ti.close()
-else:
-    url_dictionary = {}
-    lex_dictionary = {}
-    fi_dictionary = defaultdict(list)
-    ii_dictionary = multi_dict(2, list)
-    title_dictionary = defaultdict(list)
-
-fp_temp = open("storage.txt", "r")
-key = int(fp_temp.readline())
-docid = int(fp_temp.readline())
-fp_temp.close()
-
-# making of lexicon
-for fname in glob.glob("newsdata/*.json"):
-    fp = open(fname, "r")
-
-    if fp_filenames.mode == 'a+':
-        if not check_if_string_in_file('filecount.txt', fname.lower()):
-            print("new file added in dataset")
-            fp_filenames.write(fp.name)
-            fp_filenames.write("\n")
-            y = json.load(fp)
-            for i in range(len(y)):
-                position = 0
-
-                word_tokens = word_tokenize(y[i]["content"])
-                url_dictionary[f"{docid}"] = y[i]["url"]
-                title_tokens = word_tokenize(y[i]["title"])
-
-                word_tokens = [w.lower() for w in word_tokens]
-                table = str.maketrans('', '', string.punctuation)
-                strip = [w.translate(table) for w in word_tokens]
-
-                title_tokens = [t.lower() for t in title_tokens]
-                title_table = str.maketrans('', '', string.punctuation)
-                title_strip = [t.translate(title_table) for t in title_tokens]
-                for w in strip:
-                    if w.isalpha() and w not in stop_words:
-                        x = snow_stemmer.stem(w)
-                        if x not in lex_dictionary:
-                            # making of lexicon
-                            lex_dictionary[x] = key
-                            key += 1
-                        if x in lex_dictionary:  # making of inverted index
-                            if str(lex_dictionary[x]) not in ii_dictionary:
-                                # wordid does not exist
-                                ii_dictionary.update({f"{lex_dictionary[x]}": {}})
-                            if str(lex_dictionary[x]) in ii_dictionary:
-                                if str(docid) not in ii_dictionary[f"{lex_dictionary[x]}"]:
-                                    # wordid exists but doc id doesnt
-                                    ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"] = [position]
-                                elif str(docid) in ii_dictionary[f"{lex_dictionary[x]}"]:
-                                    # wordid and docid exists
-                                    temp_list = [ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"]]
-                                    temp_list = list(flatten(temp_list))
-                                    temp_list.append(position)
-                                    ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"] = temp_list
-                            if str(docid) not in fi_dictionary:
-                                # making of forward index
-                                fi_dictionary[f"{docid}"] = [lex_dictionary[x]]
-                            if str(docid) in fi_dictionary:
-                                if lex_dictionary[x] not in fi_dictionary[f"{docid}"]:
-                                    fi_dictionary[f"{docid}"].append(lex_dictionary[x])
-                        position += 1
-                for t in title_strip:
-                    if t.isalpha() and t not in stop_words:
-                        t = snow_stemmer.stem(t)
-                        if t not in lex_dictionary:
-                            lex_dictionary[t] = key
-                            key += 1
-                        if t in lex_dictionary:
-                            if str(lex_dictionary[t]) not in title_dictionary:
-                                title_dictionary[f"{lex_dictionary[t]}"] = [docid]
-                            if str(lex_dictionary[t]) in title_dictionary:
-                                if docid not in title_dictionary[f"{lex_dictionary[t]}"]:
-                                    title_dictionary[f"{lex_dictionary[t]}"].append(docid)
-                docid = docid + 1
-            print(fp.name)
-            print(docid)
-            write = 1
-        else:
-            continue
-
-fp_temp = open("storage.txt", "w")
-fp_temp.write(str(key))
-fp_temp.write("\n")
-fp_temp.write(str(docid))
-fp_temp.close()
-if write == 1:
-    fp_fi = open("forwardindex.json", "w")
-    fp_ii = open("invertedindex.json", "w")
-    fp_lex = open("lexicon.json", "w")
-    fp_url = open("urls.json", "w")
-    fp_ti = open("titleinverted.json", "w")
-    json.dump(lex_dictionary, fp_lex)
-    json.dump(fi_dictionary, fp_fi)
-    json.dump(ii_dictionary, fp_ii)
-    json.dump(url_dictionary, fp_url)
-    json.dump(title_dictionary, fp_ti)
-    fp_url.close()
-    fp_ii.close()
-    fp_lex.close()
-    fp_ti.close()
-
-fp_fi.close()
-fp_filenames.close()
-print(time.time() - start_time)
+root.mainloop()
