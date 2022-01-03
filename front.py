@@ -31,15 +31,29 @@ fp_temp = open("storage.txt", "r")
 key = int(fp_temp.readline())
 docid = int(fp_temp.readline())
 fp_temp.close()
+
+fp_a = open("author.json", "r")
+author_dictionary = json.load(fp_a)
+fp_a.close()
+
 fp_filenames = open('filecount.txt', "a+")
+
 fp_lex = open("lexicon.json", "r")
 lex_dictionary = json.load(fp_lex)
+fp_lex.close()
+
 fp_url = open("urls.json", "r")
 url_dic = json.load(fp_url)
+fp_url.close()
+
 fp_inverted = open("invertedindex.json", "r")
 ii_dictionary = json.load(fp_inverted)
+fp_inverted.close()
+
 fp_ti = open("titleinverted.json", "r")
 titleIndex = json.load(fp_ti)
+fp_ti.close()
+
 stop_words = set(stopwords.words("english"))
 snow_stemmer = SnowballStemmer(language='english')
 write = 0
@@ -141,7 +155,7 @@ def diff(a, val):
     return a
 
 
-# searching a single word and returning result as a list.
+# searching a single word and returning result as a list by passing a word.
 def singleword(word):
     stemmedword = snow_stemmer.stem(word)
     if stemmedword in lex_dictionary:
@@ -156,6 +170,18 @@ def singleword(word):
         return []
 
 
+# searching in authors and returning result as a list by passing a word
+def authorsearch(word):
+
+    sth = [value for key, value in author_dictionary.items() if word in key.lower()]
+    if len(sth) > 0:
+        sth = list(flatten(sth))
+        return sth
+    else:
+        return []
+
+
+# searching a single word and returning result as a list by passing a wordid.
 def singlewordwithid(wordid):
     if str(wordid) in ii_dictionary:
         elem = ii_dictionary[str(wordid)]
@@ -175,31 +201,46 @@ def titleCheck(word):
             return titlesearch
 
 
-'''
-The searching functions perform the searching.
-**** FOR SINGLE WORD SEARCH ****
--> Title occurrences are shown first.
--> Occurrence in content are then shown.
-
-*** FOR MULTIWORD SEARCH ***
--> Title with all or more than 1 words in it are shown.
--> Content with all words coming together as a string is shown.
--> Content with all the words regardless of their positions are shown.
--> Single word occurrences in title are shown.
--> Single word in contents are displayed at last.
-
-*** NON EXISTING WORD ***
--> No result is shown.
--> Console displays that word does not exist.
-'''
-
-
 def searching(search, lis):
+    '''
+    The searching functions perform the searching.
+    **** FOR SINGLE WORD SEARCH ****
+    -> Title occurrences are shown first.
+    -> Occurrence in content are then shown.
+
+    *** FOR MULTIWORD SEARCH ***
+    -> Title with all or more than 1 words in it are shown.
+    -> Content with all words coming together as a string is shown.
+    -> Content with all the words regardless of their positions are shown.
+    -> Single word occurrences in title are shown.
+    -> Single word in contents are displayed at last.
+
+    *** NON EXISTING WORD ***
+    -> No result is shown.
+    -> Console displays that word does not exist.
+    '''
     searchquery = search
     wordsInSearch = searchquery.split()
 
-    # multi-words searching.
-    if len(wordsInSearch) > 1:
+    # multi-words\author searching.
+    if ".author" in wordsInSearch:
+        x = searchquery.split(".author ")
+        auth_name = "".join(x)
+        x = auth_name.split()
+        auth_name = "".join(x)
+        auth_name = auth_name.lower()
+        res = authorsearch(auth_name)
+        if len(res) > 0:
+            counter = 0
+            for values in res:
+                lis.append(url_dic[f"{values}"])
+                counter += 1
+                if counter == 60:
+                    break
+        else:
+            print("\nno such author exists\n")
+
+    elif len(wordsInSearch) > 1:
         wordslist = []
         result = {}
         temp = defaultdict(list)
@@ -228,7 +269,7 @@ def searching(search, lis):
             common_set = functools.reduce(set.intersection, (set(val) for val in result.values()))
             common_title = [item for item, count in collections.Counter(intitle).items() if count > 1]
             i = 0
-            for value in common_set:
+            for value in common_set: #applying relative postioning algortithm on docids of common set
                 for wid in wordslist:
                     rp[i].append(ii_dictionary[f"{wid}"][f"{value}"])
                 i += 1
@@ -241,18 +282,22 @@ def searching(search, lis):
                 i = 0
 
             i = 0
-            for docid in common_set:
+            for docid in common_set: #separting docids where close proximity occurences are found
                 for i in range(len(mwq[docid]) - 1):
                     mwq[docid][0] = intersection(mwq[docid][0], mwq[docid][i + 1])
                     if len(mwq[docid][0]) != 0:
                         proximity[docid] = mwq[docid][0]
-            if len(intitle) > 0:
+            if len(common_title) > 0:
                 print("\n------------TITLE OCCURRENCES-----------------\n")
+                count = 0
                 for t in common_title:
                     if t is None:
                         continue
                     else:  # printing urls from docs where the words from query occur i.e common set
                         lis.append(url_dic[f"{t}"])
+                        count +=1
+                        if count == 30:
+                            break
 
             if len(common_set) == 0:
                 print("No such combination of words exist in the database")
@@ -270,13 +315,29 @@ def searching(search, lis):
             else:  # printing words in close proximity first and the ones in common set later
                 if len(proximity) != 0:
                     print("\n------------CLOSE PROXIMITY OCCURRENCES-----------------\n")
+                    var = 0
                     for val in proximity.keys():
                         lis.append(url_dic[f"{val}"])
+                        var +=1
+                        if var == 30:
+                            break
                     print("\n------------OTHER OCCURRENCES---------------------------\n")
+                    var = 0
                     for value in common_set:
                         if value not in proximity.keys():
                             lis.append(url_dic[f"{value}"])
-
+                            var+=1
+                            if var == 30:
+                                break
+                else:
+                    print("\n------------OTHER OCCURRENCES---------------------------\n")
+                    var = 0
+                    for value in common_set:
+                        if value not in proximity.keys():
+                            lis.append(url_dic[f"{value}"])
+                            var += 1
+                            if var == 30:
+                                break
         elif len(wordslist) == 1:  # if there is only 1 word from the multiword query that is in lex_dictionary
             for wordids in wordslist:
                 sth = singlewordwithid(wordids)
@@ -369,7 +430,11 @@ def updateall(filetoadd, key, docid, fp_filenames):
         for i in range(len(y)):
             position = 0
             word_tokens = word_tokenize(y[i]["content"])
-            url_dic[f"{docid}"] = y[i]["url"]
+            url_dic[f"{docid}"] = y[i]["url"]               #updating urls
+            author_tokens = word_tokenize(y[i]["author"])   #updating authors
+            author_tokens = [w.lower() for w in author_tokens]
+            author = "".join(author_tokens)
+            author_dictionary[f'{author}'].append(docid)
             title_tokens = word_tokenize(y[i]["title"])
             word_tokens = [w.lower() for w in word_tokens]
             table = str.maketrans('', '', string.punctuation)
@@ -399,7 +464,7 @@ def updateall(filetoadd, key, docid, fp_filenames):
                                 temp_list.append(position)
                                 ii_dictionary[f"{lex_dictionary[x]}"][f"{docid}"] = temp_list
                     position += 1
-            for t in title_strip:
+            for t in title_strip:#updating title
                 if t.isalpha() and t not in stop_words:
                     t = snow_stemmer.stem(t)
                     if t not in lex_dictionary:
@@ -412,24 +477,27 @@ def updateall(filetoadd, key, docid, fp_filenames):
                             if docid not in titleIndex[f"{lex_dictionary[t]}"]:
                                 titleIndex[f"{lex_dictionary[t]}"].append(docid)
             docid = docid + 1
-    fp_temp = open("storage.txt", "w")
-    fp_temp.write(str(key))
-    fp_temp.write("\n")
-    fp_temp.write(str(docid))
-    fp_temp.close()
-    fp_ii = open("invertedindex.json", "w")
-    fp_lex = open("lexicon.json", "w")
-    fp_url = open("urls.json", "w")
-    fp_ti = open("titleinverted.json", "w")
-    json.dump(lex_dictionary, fp_lex)
-    json.dump(ii_dictionary, fp_ii)
-    json.dump(url_dic, fp_url)
-    json.dump(titleIndex, fp_ti)
-    fp_url.close()
-    fp_ii.close()
-    fp_lex.close()
-    fp_ti.close()
-    fp_filenames.close()
+        fp_temp = open("storage.txt", "w")
+        fp_temp.write(str(key))
+        fp_temp.write("\n")
+        fp_temp.write(str(docid))
+        fp_temp.close()
+        fp_ii = open("invertedindex.json", "w")
+        fp_lex = open("lexicon.json", "w")
+        fp_url = open("urls.json", "w")
+        fp_ti = open("titleinverted.json", "w")
+        fp_a = open("author.json", "w")
+        json.dump(author_dictionary, fp_a)
+        json.dump(lex_dictionary, fp_lex)
+        json.dump(ii_dictionary, fp_ii)
+        json.dump(url_dic, fp_url)
+        json.dump(titleIndex, fp_ti)
+        fp_url.close()
+        fp_ii.close()
+        fp_lex.close()
+        fp_ti.close()
+        fp_a.close()
+        fp_filenames.close()
     print("updation successfull")
 
 
