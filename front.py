@@ -104,6 +104,11 @@ def clear():
     scframe.destroy()
     create()
 
+# Create a scrollable frame to show to the user.
+def create():
+    global scframe
+    scframe = VerticalScrolledFrame(root)
+    scframe.pack(side='bottom', pady=30)
 
 # Get query from the user. (The text written in search bar)
 def getquery():
@@ -117,11 +122,6 @@ def getquery():
         btn.pack(padx=10, pady=5, side=tk.TOP)
 
 
-# Create a scrollable frame to show to the user.
-def create():
-    global scframe
-    scframe = VerticalScrolledFrame(root)
-    scframe.pack(side='bottom', pady=30)
 
 
 # Make the urls that are received as strings and convert them to hyperlinks.
@@ -496,23 +496,24 @@ def updateall(filetoadd, key, docid, fp_filenames):
     print("updation successfull")
 
 
-print("Initializing GUI")
+if __name__ == '__main__':
+    print("Initializing GUI")
 
-root = tk.Tk()
-root.title("Search Engine")
-root.geometry('800x500')
-root['bg'] = '#FFFFFF'
-root.minsize(800, 500)
-root.maxsize(800, 500)
-lis = []
-user_query = tk.StringVar()
-# logo_path = tk.PhotoImage(file="BG.ppm")
-# logo = Label(root, image=logo_path).pack()
-button_font = font.Font(family='Calibri', size=8)
-text_entry = tk.Entry(root, textvariable=user_query, width=55, bg='#C0C0C0').place(x=230, y=120)
-search_button = tk.Button(root, text="Search", font=button_font, padx=1, pady=1, command=getquery).place(x=375, y=150)
-add_file_button = tk.Button(root, text="Add File", font=button_font, padx=4, pady=2, command=getFile).place(x=740, y=10)
-scframe = VerticalScrolledFrame(root)
-scframe.pack(side='bottom', pady=30)
+    root = tk.Tk()
+    root.title("Search Engine")
+    root.geometry('800x500')
+    root['bg'] = '#FFFFFF'
+    root.minsize(800, 500)
+    root.maxsize(800, 500)
+    lis = []
+    user_query = tk.StringVar()
+    # logo_path = tk.PhotoImage(file="BG.ppm")
+    # logo = Label(root, image=logo_path).pack()
+    button_font = font.Font(family='Calibri', size=8)
+    text_entry = tk.Entry(root, textvariable=user_query, width=55, bg='#C0C0C0').place(x=230, y=120)
+    search_button = tk.Button(root, text="Search", font=button_font, padx=1, pady=1, command=getquery).place(x=375, y=150)
+    add_file_button = tk.Button(root, text="Add File", font=button_font, padx=4, pady=2, command=getFile).place(x=740, y=10)
+    scframe = VerticalScrolledFrame(root)
+    scframe.pack(side='bottom', pady=30)
 
-root.mainloop()
+    root.mainloop()
