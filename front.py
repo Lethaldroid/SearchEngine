@@ -1,12 +1,3 @@
-'''
-DSA PROJECT MADE BY:
-1. SAIF ALI (336561)
-2. HASEEB MAHMOOD (334718)
-3. TALHA MAJEED KHAN (336254)
-4. ALI USMAN BUTT (335520)
-
-PRESENTED TO: SIR FAISAL SHAFAIT
-'''
 
 # Importing external dependencies.
 import collections
@@ -31,7 +22,6 @@ fp_temp = open("storage.txt", "r")
 key = int(fp_temp.readline())
 docid = int(fp_temp.readline())
 fp_temp.close()
-
 fp_a = open("author.json", "r")
 author_dictionary = json.load(fp_a)
 fp_a.close()
@@ -288,7 +278,7 @@ def searching(search, lis):
                     if len(mwq[docid][0]) != 0:
                         proximity[docid] = mwq[docid][0]
             if len(common_title) > 0:
-                print("\n------------TITLE OCCURRENCES-----------------\n")
+                # print("\n------------TITLE OCCURRENCES-----------------\n")
                 count = 0
                 for t in common_title:
                     if t is None:
@@ -300,7 +290,7 @@ def searching(search, lis):
                             break
 
             if len(common_set) == 0:
-                print("No such combination of words exist in the database")
+                # print("No such combination of words exist in the database")
                 for wordids in wordslist:  # if there is no word from query in title or in close proximity or common in some document
                     sth = singlewordwithid(wordids)
                     counter = 0
@@ -314,14 +304,14 @@ def searching(search, lis):
                         continue
             else:  # printing words in close proximity first and the ones in common set later
                 if len(proximity) != 0:
-                    print("\n------------CLOSE PROXIMITY OCCURRENCES-----------------\n")
+                    # print("\n------------CLOSE PROXIMITY OCCURRENCES-----------------\n")
                     var = 0
                     for val in proximity.keys():
                         lis.append(url_dic[f"{val}"])
                         var +=1
                         if var == 30:
                             break
-                    print("\n------------OTHER OCCURRENCES---------------------------\n")
+                    # print("\n------------OTHER OCCURRENCES---------------------------\n")
                     var = 0
                     for value in common_set:
                         if value not in proximity.keys():
@@ -330,7 +320,7 @@ def searching(search, lis):
                             if var == 30:
                                 break
                 else:
-                    print("\n------------OTHER OCCURRENCES---------------------------\n")
+                    # print("\n------------OTHER OCCURRENCES---------------------------\n")
                     var = 0
                     for value in common_set:
                         if value not in proximity.keys():
@@ -360,14 +350,14 @@ def searching(search, lis):
         counter = 0
         if len(ts) > 0 or len(sws) > 0:
             if len(ts) > 0:
-                print("\n------------TITLE OCCURRENCES-----------------\n")
+                # print("\n------------TITLE OCCURRENCES-----------------\n")
                 for t in ts:
                     lis.append(url_dic[f"{t}"])
                     counter += 1
                     if counter == 30:
                         break
             if len(sws) > 0:
-                print("\n------------OTHER OCCURRENCES-----------------\n")
+                # print("\n------------OTHER OCCURRENCES-----------------\n")
                 counter = 0
                 for key in sws.keys():
                     lis.append(url_dic[f"{key}"])
@@ -434,7 +424,12 @@ def updateall(filetoadd, key, docid, fp_filenames):
             author_tokens = word_tokenize(y[i]["author"])   #updating authors
             author_tokens = [w.lower() for w in author_tokens]
             author = "".join(author_tokens)
-            author_dictionary[f'{author}'].append(docid)
+            if author not in author_dictionary:
+                author_dictionary[f"{author}"] = [docid]
+            elif author in author_dictionary:
+                author_docids = author_dictionary[f"{author}"]
+                author_docids.append(docid)
+                author_dictionary[f"{author}"] = author_docids
             title_tokens = word_tokenize(y[i]["title"])
             word_tokens = [w.lower() for w in word_tokens]
             table = str.maketrans('', '', string.punctuation)
@@ -511,12 +506,12 @@ root.minsize(800, 500)
 root.maxsize(800, 500)
 lis = []
 user_query = tk.StringVar()
-logo_path = tk.PhotoImage(file="BG.ppm")
-logo = Label(root, image=logo_path).pack()
-button_font = font.Font(family='Arial', size=8)
+# logo_path = tk.PhotoImage(file="BG.ppm")
+# logo = Label(root, image=logo_path).pack()
+button_font = font.Font(family='Calibri', size=8)
 text_entry = tk.Entry(root, textvariable=user_query, width=55, bg='#C0C0C0').place(x=230, y=120)
-search_button = tk.Button(root, text="search", font=button_font, padx=1, pady=1, command=getquery).place(x=375, y=150)
-add_file_button = tk.Button(root, text="add file", font=button_font, padx=4, pady=2, command=getFile).place(x=740, y=10)
+search_button = tk.Button(root, text="Search", font=button_font, padx=1, pady=1, command=getquery).place(x=375, y=150)
+add_file_button = tk.Button(root, text="Add File", font=button_font, padx=4, pady=2, command=getFile).place(x=740, y=10)
 scframe = VerticalScrolledFrame(root)
 scframe.pack(side='bottom', pady=30)
 
